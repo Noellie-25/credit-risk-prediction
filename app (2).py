@@ -17,14 +17,15 @@ st.set_page_config(
 st.title("💳 Credit Risk Prediction System")
 st.markdown("### Model: Random Forest with SHAP Interpretability")
 
-# Load model and explainer
+# Load model, explainer, and columns list
 @st.cache_resource
-def load_model():
+def load_artifacts():
     model = joblib.load('random_forest_model.pkl')
     explainer = joblib.load('shap_explainer.pkl')
-    return model, explainer
+    columns_list = joblib.load('columns_list.pkl')
+    return model, explainer, columns_list
 
-model, explainer = load_model()
+model, explainer, columns_list = load_artifacts()
 
 # Model performance
 st.markdown("---")
@@ -62,17 +63,24 @@ with st.form("client_form"):
 
 # Prediction processing
 if submitted:
-    # Build input DataFrame with the same columns as X_test
-    input_data = pd.DataFrame(np.zeros((1, len(X_test.columns))), columns=X_test.columns)
+    # Build input DataFrame using the saved columns list
+    input_data = pd.DataFrame(np.zeros((1, len(columns_list))), columns=columns_list)
     
     # Numeric fields
-    input_data['duration'] = duration
-    input_data['amount'] = amount
-    input_data['age'] = age
-    input_data['installment_rate'] = installment_rate
-    input_data['present_residence'] = present_residence
-    input_data['existing_credits'] = existing_credits
-    input_data['dependents'] = dependents
+    if 'duration' in input_data.columns:
+        input_data['duration'] = duration
+    if 'amount' in input_data.columns:
+        input_data['amount'] = amount
+    if 'age' in input_data.columns:
+        input_data['age'] = age
+    if 'installment_rate' in input_data.columns:
+        input_data['installment_rate'] = installment_rate
+    if 'present_residence' in input_data.columns:
+        input_data['present_residence'] = present_residence
+    if 'existing_credits' in input_data.columns:
+        input_data['existing_credits'] = existing_credits
+    if 'dependents' in input_data.columns:
+        input_data['dependents'] = dependents
     
     # Categorical fields (one-hot)
     if f'status_{status}' in input_data.columns:
@@ -128,7 +136,6 @@ if submitted:
         
     except Exception as e:
         st.warning(f"Could not generate SHAP explanation: {e}")
-        st.info("The explanation will be available in the final version.")
 
 # Footer
 st.markdown("---")
